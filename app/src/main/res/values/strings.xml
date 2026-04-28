@@ -3,7 +3,7 @@
     <string name="screen_camera_open_gallery">Open Gallery</string>
     <string name="screen_camera_take_photo">Take Photo</string>
 
-    <string name="screen_detail_plant_detection_analysis">Plant Detection Analysis</string>
+    <string name="screen_detail_object_detection_analysis">Object Detection Analysis</string>
     <string name="screen_detail_model_notice">Model Notice</string>
     <string name="screen_detail_analysis_error">Analysis Error</string>
     <string name="screen_detail_confidence">Confidence: %1$.1f%%</string>
