@@ -6,6 +6,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.example.TensorFlowObjectDetector.utils.ObjectAnalysisResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,7 @@ class TensorDetailScreenViewModel(
         const val IMAGE_URI_KEY = "imageUri"
     }
 
-    private var analyzer: PlantDetectionAnalyzer? = null
+    private var analyzer: ObjectDetectionAnalyzer? = null
     private val _uiState = MutableStateFlow(TensorDetailUIState())
     val uiState: StateFlow<TensorDetailUIState> = _uiState.asStateFlow()
 
@@ -41,7 +42,7 @@ class TensorDetailScreenViewModel(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
             val analyzerInstance = analyzer ?: runCatching {
-                PlantDetectionAnalyzer(getApplication())
+                ObjectDetectionAnalyzer(getApplication())
             }.getOrElse { throwable ->
                 _uiState.update {
                     it.copy(
@@ -54,7 +55,7 @@ class TensorDetailScreenViewModel(
             }.also { analyzer = it }
 
             when (val result = analyzerInstance.analyzeImage(imageUri)) {
-                is PlantAnalysisResult.Error -> {
+                is ObjectAnalysisResult.Error -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -64,7 +65,7 @@ class TensorDetailScreenViewModel(
                     }
                 }
 
-                is PlantAnalysisResult.Success -> {
+                is ObjectAnalysisResult.Success -> {
                     val topMatch = result.matches.first()
                     _uiState.update {
                         it.copy(

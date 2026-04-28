@@ -11,14 +11,15 @@ data class TensorDetailUIState(
     val confidence: Float? = null,
     val sourceAttribution: String? = null,
     val modelNotice: String? = null,
-    val detectionResults: List<PlantDetectionResult> = emptyList(),
+    val detectionResults: List<ObjectDetectionResult> = emptyList(),
     val errorMessage: String? = null
 )
 
-data class PlantDetectionResult(
+data class ObjectDetectionResult(
     val plantName: String,
     val confidence: Float,
-    val metadata: Map<String, String> = emptyMap()
+    val metadata: Map<String, String> = emptyMap(),
+    val detectionBox: DetectionBox? = null
 ) {
     val description: String
         get() = metadata["description"] ?: "No description available for this plant."
@@ -29,3 +30,10 @@ data class PlantDetectionResult(
     val sourceAttribution: String?
         get() = metadata["sourceAttribution"]
 }
+
+data class DetectionBox(
+    val left: Float,
+    val top: Float,
+    val right: Float,
+    val bottom: Float
+)

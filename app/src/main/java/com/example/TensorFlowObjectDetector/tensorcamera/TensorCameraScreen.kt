@@ -30,10 +30,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.TensorFlowObjectDetector.R
+import com.example.TensorFlowObjectDetector.ui.theme.CustomDimens
 
 @Composable
 fun TensorCameraScreen(
@@ -83,13 +85,13 @@ fun TensorCameraScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp),
+                .padding(bottom = CustomDimens.dimen32Dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(CustomDimens.dimen16Dp)
         ) {
             // Camera and Gallery buttons
             Row(
-                horizontalArrangement = Arrangement.spacedBy(32.dp),
+                horizontalArrangement = Arrangement.spacedBy(CustomDimens.dimen32Dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Gallery button (FAB-like)
@@ -100,7 +102,7 @@ fun TensorCameraScreen(
                         )
                     },
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(CustomDimens.dimen64Dp)
                         .background(
                             color = MaterialTheme.colorScheme.primaryContainer,
                             shape = CircleShape
@@ -108,9 +110,9 @@ fun TensorCameraScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PhotoLibrary,
-                        contentDescription = "Open Gallery",
+                        contentDescription = stringResource(id = R.string.screen_camera_open_gallery),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(CustomDimens.dimen32Dp)
                     )
                 }
 
@@ -120,7 +122,7 @@ fun TensorCameraScreen(
                         viewModel.takePhoto(context, cameraController)
                     },
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(CustomDimens.dimen80Dp)
                         .background(
                             color = MaterialTheme.colorScheme.primary,
                             shape = CircleShape
@@ -128,9 +130,9 @@ fun TensorCameraScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.PhotoCamera,
-                        contentDescription = "Take Photo",
+                        contentDescription = stringResource(id = R.string.screen_camera_take_photo),
                         tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier.size(CustomDimens.dimen36Dp)
                     )
                 }
             }
