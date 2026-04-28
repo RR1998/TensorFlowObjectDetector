@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">TensorFlow Object Detector</string>
+    <string name="screen_camera_open_gallery">Open Gallery</string>
+    <string name="screen_camera_take_photo">Take Photo</string>
+
+    <string name="screen_detail_plant_detection_analysis">Plant Detection Analysis</string>
+    <string name="screen_detail_model_notice">Model Notice</string>
+    <string name="screen_detail_analysis_error">Analysis Error</string>
+    <string name="screen_detail_confidence">Confidence: %1$.1f%%</string>
+    <string name="screen_detail_scientific_name">Scientific name: %1$s</string>
+    <string name="screen_detail_other_verified_matches">Other Verified Matches</string>
+    <string name="screen_detail_selected_image">Selected image</string>
+
+    <string name="screen_detail_preview_plant_name_rose">Rose</string>
+    <string name="screen_detail_preview_plant_name_tulip">Tulip</string>
+    <string name="screen_detail_preview_plant_name_daisy">Daisy</string>
+    <string name="screen_detail_preview_plant_description_rose">A rose is a perennial shrub in the genus Rosa.</string>
+    <string name="screen_detail_preview_plant_description_tulip">A tulip is a bulbous herb in the lily family.</string>
+    <string name="screen_detail_preview_plant_description_daisy">A daisy is a flowering plant in the aster family.</string>
+    <string name="screen_detail_preview_scientific_name_rose">Rosa</string>
+    <string name="screen_detail_preview_scientific_name_tulip">Tulipa</string>
+    <string name="screen_detail_preview_scientific_name_daisy">Bellis perennis</string>
+    <string name="screen_detail_preview_source_attribution_rose">Paraphrased from Encyclopaedia Britannica: Rose</string>
+    <string name="screen_detail_preview_source_attribution_tulip">Paraphrased from Encyclopaedia Britannica: Tulip</string>
+    <string name="screen_detail_preview_source_attribution_daisy">Paraphrased from Encyclopaedia Britannica: Daisy</string>
+    <string name="screen_detail_preview_model_notice">Object detector model not installed yet. Running plant-only analysis.</string>
+</resources>
