@@ -1,11 +1,13 @@
-package com.example.TensorFlowObjectDetector.tensordetails
+package com.example.TensorFlowObjectDetector.tensorflow.processing.classifiers
 
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.graphics.get
 import androidx.core.graphics.scale
 import com.example.TensorFlowObjectDetector.constants.AppConstants
-import com.example.TensorFlowObjectDetector.utils.normalizePlantLabel
+import com.example.TensorFlowObjectDetector.tensordetails.ObjectDetectionResult
+import com.example.TensorFlowObjectDetector.tensordetails.VerifiedPlantInfoRepository
+import com.example.TensorFlowObjectDetector.tensordetails.normalizePlantLabel
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import java.nio.ByteBuffer

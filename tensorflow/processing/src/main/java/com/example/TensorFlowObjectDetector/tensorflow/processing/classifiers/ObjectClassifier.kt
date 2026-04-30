@@ -1,4 +1,4 @@
-package com.example.TensorFlowObjectDetector.tensordetails
+package com.example.TensorFlowObjectDetector.tensorflow.processing.classifiers
 
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -6,6 +6,8 @@ import androidx.core.graphics.get
 import androidx.core.graphics.scale
 import com.example.TensorFlowObjectDetector.constants.AppConstants
 import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ONE_VALUE
+import com.example.TensorFlowObjectDetector.tensordetails.DetectionBox
+import com.example.TensorFlowObjectDetector.tensordetails.ObjectClassificationResult
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
 import java.nio.ByteBuffer
@@ -44,7 +46,7 @@ class ObjectClassifier(
             .take(maxResults.coerceAtLeast(CONST_ONE_VALUE))
             .map { index ->
                 ObjectClassificationResult(
-                    label = labels.getOrElse(index) { "unknown" },
+                    label = labels.getOrElse(index) { AppConstants.Ml.UNKNOWN_LABEL },
                     confidence = probabilities[index],
                     detectionBox = null
                 )
@@ -133,19 +135,21 @@ class ObjectClassifier(
 
         interpreter.runForMultipleInputsOutputs(arrayOf(input), outputs)
 
-        val boxTensorIndex = (AppConstants.General.CONST_ZERO_VALUE until interpreter.outputTensorCount).firstOrNull { index ->
-            val shape = interpreter.getOutputTensor(index).shape()
-            shape.size == AppConstants.General.CONST_THREE_VALUE &&
-                shape[AppConstants.General.CONST_TWO_VALUE] == AppConstants.General.CONST_FOUR_VALUE
-        } ?: return listOf(
-            ObjectClassificationResult(
-                AppConstants.Ml.UNKNOWN_LABEL,
-                AppConstants.Ml.ZERO_CONFIDENCE,
-                null
+        val boxTensorIndex =
+            (AppConstants.General.CONST_ZERO_VALUE until interpreter.outputTensorCount).firstOrNull { index ->
+                val shape = interpreter.getOutputTensor(index).shape()
+                shape.size == AppConstants.General.CONST_THREE_VALUE &&
+                    shape[AppConstants.General.CONST_TWO_VALUE] == AppConstants.General.CONST_FOUR_VALUE
+            } ?: return listOf(
+                ObjectClassificationResult(
+                    AppConstants.Ml.UNKNOWN_LABEL,
+                    AppConstants.Ml.ZERO_CONFIDENCE,
+                    null
+                )
             )
-        )
 
-        val numBoxes = interpreter.getOutputTensor(boxTensorIndex).shape()[AppConstants.General.CONST_ONE_VALUE]
+        val numBoxes =
+            interpreter.getOutputTensor(boxTensorIndex).shape()[AppConstants.General.CONST_ONE_VALUE]
 
         val rank2Candidates = (AppConstants.General.CONST_ZERO_VALUE until interpreter.outputTensorCount)
             .filter { index ->
@@ -184,7 +188,7 @@ class ObjectClassifier(
 
         return scores.indices
             .sortedByDescending { scores[it] }
-            .take(maxResults.coerceAtLeast(1))
+            .take(maxResults.coerceAtLeast(CONST_ONE_VALUE))
             .map { detectionIndex ->
                 val confidence = normalizeConfidence(scores[detectionIndex])
                 val rawIndex = if (detectionIndex in classes.indices) {
@@ -245,11 +249,13 @@ class ObjectClassifier(
                     AppConstants.General.CONST_ONE_VALUE -> {
                         FloatArray(shape[AppConstants.General.CONST_ZERO_VALUE])
                     }
+
                     AppConstants.General.CONST_TWO_VALUE -> {
                         Array(shape[AppConstants.General.CONST_ZERO_VALUE]) {
                             FloatArray(shape[AppConstants.General.CONST_ONE_VALUE])
                         }
                     }
+
                     AppConstants.General.CONST_THREE_VALUE -> {
                         Array(shape[AppConstants.General.CONST_ZERO_VALUE]) {
                             Array(shape[AppConstants.General.CONST_ONE_VALUE]) {
@@ -257,6 +263,7 @@ class ObjectClassifier(
                             }
                         }
                     }
+
                     else -> throw IllegalStateException("Unsupported output tensor rank: ${shape.size}")
                 }
             }
@@ -266,11 +273,13 @@ class ObjectClassifier(
                     AppConstants.General.CONST_ONE_VALUE -> {
                         ByteArray(shape[AppConstants.General.CONST_ZERO_VALUE])
                     }
+
                     AppConstants.General.CONST_TWO_VALUE -> {
                         Array(shape[AppConstants.General.CONST_ZERO_VALUE]) {
                             ByteArray(shape[AppConstants.General.CONST_ONE_VALUE])
                         }
                     }
+
                     AppConstants.General.CONST_THREE_VALUE -> {
                         Array(shape[AppConstants.General.CONST_ZERO_VALUE]) {
                             Array(shape[AppConstants.General.CONST_ONE_VALUE]) {
@@ -278,6 +287,7 @@ class ObjectClassifier(
                             }
                         }
                     }
+
                     else -> throw IllegalStateException("Unsupported output tensor rank: ${shape.size}")
                 }
             }
@@ -292,9 +302,10 @@ class ObjectClassifier(
                 val first = output.firstOrNull()
                 when (first) {
                     is FloatArray -> first
-                        is ByteArray -> first.map {
-                            (it.toInt() and AppConstants.Ml.UINT8_MAX).toFloat()
-                        }.toFloatArray()
+                    is ByteArray -> first.map {
+                        (it.toInt() and AppConstants.Ml.UINT8_MAX).toFloat()
+                    }.toFloatArray()
+
                     else -> null
                 }
             }
@@ -315,9 +326,11 @@ class ObjectClassifier(
                             is ByteArray -> candidate.map {
                                 (it.toInt() and AppConstants.Ml.UINT8_MAX).toFloat()
                             }.toFloatArray()
+
                             else -> null
                         }
                     }
+
                     else -> null
                 }
             }
@@ -351,7 +364,8 @@ class ObjectClassifier(
 
         return when (outputDataType) {
             DataType.FLOAT32 -> {
-                val output = Array(AppConstants.General.CONST_ONE_VALUE) { FloatArray(outputClassCount) }
+                val output =
+                    Array(AppConstants.General.CONST_ONE_VALUE) { FloatArray(outputClassCount) }
                 interpreter.run(input, output)
                 output[AppConstants.General.CONST_ZERO_VALUE]
             }
@@ -360,7 +374,8 @@ class ObjectClassifier(
                 val qParams = outputTensor.quantizationParams()
                 val scale = qParams.scale
                 val zeroPoint = qParams.zeroPoint
-                val output = Array(AppConstants.General.CONST_ONE_VALUE) { ByteArray(outputClassCount) }
+                val output =
+                    Array(AppConstants.General.CONST_ONE_VALUE) { ByteArray(outputClassCount) }
                 interpreter.run(input, output)
                 output[AppConstants.General.CONST_ZERO_VALUE].map { byteValue ->
                     val quantized = if (outputDataType == DataType.UINT8) {

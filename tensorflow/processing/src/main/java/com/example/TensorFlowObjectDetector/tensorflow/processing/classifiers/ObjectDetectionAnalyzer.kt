@@ -1,4 +1,4 @@
-package com.example.TensorFlowObjectDetector.tensordetails
+package com.example.TensorFlowObjectDetector.tensorflow.processing.classifiers
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -7,12 +7,20 @@ import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import com.example.TensorFlowObjectDetector.constants.AppConstants
-import com.example.TensorFlowObjectDetector.utils.ObjectAnalysisResult
+import com.example.TensorFlowObjectDetector.tensordetails.AirCraft
+import com.example.TensorFlowObjectDetector.tensordetails.ClassifierSession
+import com.example.TensorFlowObjectDetector.tensordetails.DetectionBox
+import com.example.TensorFlowObjectDetector.tensordetails.ModelConfig
+import com.example.TensorFlowObjectDetector.tensordetails.ObjectAnalysisResult
+import com.example.TensorFlowObjectDetector.tensordetails.ObjectClassificationResult
+import com.example.TensorFlowObjectDetector.tensordetails.ObjectDetectionResult
+import com.example.TensorFlowObjectDetector.tensordetails.VerifiedPlantInfoRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.tensorflow.lite.Interpreter
 import java.io.FileNotFoundException
 import java.nio.channels.FileChannel
+import org.json.JSONObject
 
 class ObjectDetectionAnalyzer(
     context: Context,
@@ -23,21 +31,22 @@ class ObjectDetectionAnalyzer(
         private const val PLANT_MODEL_ASSET = "models/plants_model.tflite"
         private const val OBJECT_MODEL_ASSET = "models/object_detector.tflite"
         private const val GENERAL_MODEL_ASSET = "models/general_model.tflite"
+        private const val AIRCRAFT_MODEL_ASSET = "models/aircraft_model.tflite"
         private const val OBJECT_LABELS_ASSET = "models/object_labels.txt"
         private const val GENERAL_LABELS_ASSET = "models/general_labels.txt"
+        private const val AIRCRAFT_LABELS_ASSET = "models/aircraft_labels.txt"
+        private const val AIRCRAFT_METADATA_ASSET = "models/aircraft_metadata.json"
         private const val PLANT_LABELS_ASSET = "models/plants_labels.txt"
-
-        // TODO: Change this back to 1 after validating multi-match behavior in UI.
         private const val MAX_MATCHES_TO_UI = AppConstants.Ml.MAX_MATCHES_TO_UI
     }
 
     private val appContext = context.applicationContext
+    private val aircraftMetadataByLabel: Map<String, AirCraft> by lazy { readAircraftMetadata() }
 
     private var plantSession: ClassifierSession<PlantClassifier>? = null
-
-    // TODO Clean up redundant sessions
     private var objectSession: ClassifierSession<ObjectClassifier>? = null
     private var generalSession: ClassifierSession<ObjectClassifier>? = null
+    private var aircraftSession: ClassifierSession<ObjectClassifier>? = null
 
     suspend fun analyzeImage(imageUri: Uri): ObjectAnalysisResult =
         withContext(Dispatchers.Default) {
@@ -94,19 +103,76 @@ class ObjectDetectionAnalyzer(
                         detectionBox = null
                     )
 
+                if (isWarplaneLabel(topGeneralPrediction.label)) {
+                    val aircraftConfig = runCatching {
+                        resolveModelConfig(
+                            model = AIRCRAFT_MODEL_ASSET,
+                            labels = AIRCRAFT_LABELS_ASSET
+                        )
+                    }.getOrElse { throwable ->
+                        if (cropCreated) cropBitmap.recycle()
+                        return@withContext ObjectAnalysisResult.Error(
+                            throwable.message ?: "The aircraft model could not be resolved."
+                        )
+                    }
+                    val aircraftClassifier =
+                        getOrCreateSharedObjectClassifier(
+                            modelConfig = aircraftConfig,
+                            normalization = InputNormalization.ZERO_TO_255,
+                            currentSession = aircraftSession
+                        ) { updated -> aircraftSession = updated }
+
+                    val aircraftPredictions = aircraftClassifier.classifyTopK(
+                        bitmap = cropBitmap,
+                        maxResults = MAX_MATCHES_TO_UI
+                    )
+                    val topAircraftPrediction = aircraftPredictions.firstOrNull()
+                        ?: ObjectClassificationResult(
+                            label = AppConstants.Ml.UNKNOWN_LABEL,
+                            confidence = AppConstants.Ml.ZERO_CONFIDENCE,
+                            detectionBox = null
+                        )
+                    if (cropCreated) cropBitmap.recycle()
+
+                    return@withContext ObjectAnalysisResult.Success(
+                        matches = aircraftPredictions.ifEmpty { listOf(topAircraftPrediction) }
+                            .map { prediction ->
+                                val aircraft =
+                                    aircraftMetadataByLabel[prediction.label.trim().lowercase()]
+                                val description = aircraft?.description
+                                    ?: "No description available for this aircraft."
+                                ObjectDetectionResult(
+                                    plantName = aircraft?.name ?: prediction.label,
+                                    confidence = prediction.confidence,
+                                    metadata = mapOf(
+                                        "description" to description,
+                                        "sourceAttribution" to "Aircraft model"
+                                    ),
+                                    detectionBox = objectPrediction.detectionBox
+                                )
+                            },
+                        modelNotice = if (objectPrediction.detectionBox == null) {
+                            "Object detector did not return a box; aircraft model ran on full image."
+                        } else {
+                            null
+                        }
+                    )
+                }
+
                 if (!isPlantLikeLabel(topGeneralPrediction.label)) {
                     if (cropCreated) cropBitmap.recycle()
                     return@withContext ObjectAnalysisResult.Success(
-                        matches = generalPredictions.ifEmpty { listOf(topGeneralPrediction) }.map { prediction ->
-                            ObjectDetectionResult(
-                                plantName = prediction.label,
-                                confidence = prediction.confidence,
-                                metadata = mapOf(
-                                    "sourceAttribution" to "General model"
-                                ),
-                                detectionBox = objectPrediction.detectionBox
-                            )
-                        },
+                        matches = generalPredictions.ifEmpty { listOf(topGeneralPrediction) }
+                            .map { prediction ->
+                                ObjectDetectionResult(
+                                    plantName = prediction.label,
+                                    confidence = prediction.confidence,
+                                    metadata = mapOf(
+                                        "sourceAttribution" to "General model"
+                                    ),
+                                    detectionBox = objectPrediction.detectionBox
+                                )
+                            },
                         modelNotice = if (objectPrediction.detectionBox == null) {
                             "Object detector did not return a box; general model ran on full image."
                         } else {
@@ -161,9 +227,11 @@ class ObjectDetectionAnalyzer(
         plantSession?.interpreter?.close()
         objectSession?.interpreter?.close()
         generalSession?.interpreter?.close()
+        aircraftSession?.interpreter?.close()
         plantSession = null
         objectSession = null
         generalSession = null
+        aircraftSession = null
     }
 
     private fun getOrCreatePlantClassifier(modelConfig: ModelConfig): PlantClassifier {
@@ -261,6 +329,29 @@ class ObjectDetectionAnalyzer(
         }
     }
 
+    private fun readAircraftMetadata(): Map<String, AirCraft> {
+        if (!assetExists(AIRCRAFT_METADATA_ASSET)) return emptyMap()
+        val jsonText = appContext.assets.open(AIRCRAFT_METADATA_ASSET)
+            .bufferedReader()
+            .use { it.readText() }
+        val json = JSONObject(jsonText)
+        val keys = json.keys()
+        val metadata = mutableMapOf<String, AirCraft>()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val entry = json.optJSONObject(key) ?: continue
+            val name = entry.optString("name")
+            val description = entry.optString("description")
+            if (name.isNotBlank() && description.isNotBlank()) {
+                metadata[key.trim().lowercase()] = AirCraft(
+                    name = name,
+                    description = description
+                )
+            }
+        }
+        return metadata
+    }
+
     private fun loadBitmapRespectOrientation(imageUri: Uri): Bitmap? {
         val bitmap =
             appContext.contentResolver.openInputStream(imageUri)?.use(BitmapFactory::decodeStream)
@@ -311,14 +402,25 @@ class ObjectDetectionAnalyzer(
         return plantKeywords.any { normalized.contains(it) }
     }
 
+    private fun isWarplaneLabel(label: String): Boolean {
+        return label.trim().lowercase() == "warplane" || label.trim()
+            .lowercase() == "plane" || label.trim().lowercase() == "airship"
+    }
+
     private fun cropToDetection(bitmap: Bitmap, box: DetectionBox): Bitmap {
         val width = bitmap.width
         val height = bitmap.height
 
         val left = (box.left * width).toInt()
-            .coerceIn(AppConstants.General.CONST_ZERO_VALUE, width - AppConstants.General.CONST_ONE_VALUE)
+            .coerceIn(
+                AppConstants.General.CONST_ZERO_VALUE,
+                width - AppConstants.General.CONST_ONE_VALUE
+            )
         val top = (box.top * height).toInt()
-            .coerceIn(AppConstants.General.CONST_ZERO_VALUE, height - AppConstants.General.CONST_ONE_VALUE)
+            .coerceIn(
+                AppConstants.General.CONST_ZERO_VALUE,
+                height - AppConstants.General.CONST_ONE_VALUE
+            )
         val right = (box.right * width).toInt()
             .coerceIn(left + AppConstants.General.CONST_ONE_VALUE, width)
         val bottom = (box.bottom * height).toInt()

@@ -46,6 +46,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":domain:detection"))
+    implementation(project(":tensorflow:processing"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -64,7 +67,6 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.coil.compose)
-    implementation(libs.litert)
     implementation(libs.androidx.exifinterface)
 
     testImplementation(libs.junit)
