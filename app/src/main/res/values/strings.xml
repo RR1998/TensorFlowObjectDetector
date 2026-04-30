@@ -1,12 +1,17 @@
 <resources>
     <string name="app_name">TensorFlow Object Detector</string>
+    <string name="screen_camera_title">TensorFlow Object Detector"</string>
     <string name="screen_camera_open_gallery">Open Gallery</string>
     <string name="screen_camera_take_photo">Take Photo</string>
 
     <string name="screen_detail_object_detection_analysis">Object Detection Analysis</string>
     <string name="screen_detail_model_notice">Model Notice</string>
     <string name="screen_detail_analysis_error">Analysis Error</string>
-    <string name="screen_detail_confidence">Confidence: %1$.1f%%</string>
+    <string name="screen_detail_information">Information</string>
+    <string name="screen_detail_result">Result</string>
+    <string name="screen_detail_confidence">Confidence</string>
+    <string name="screen_detail_percentage">%1$.0f%%</string>
+    <string name="screen_detail_confidence_with_percentage">Confidence: %1$.0f%%</string>
     <string name="screen_detail_scientific_name">Scientific name: %1$s</string>
     <string name="screen_detail_other_verified_matches">Other Verified Matches</string>
     <string name="screen_detail_selected_image">Selected image</string>
