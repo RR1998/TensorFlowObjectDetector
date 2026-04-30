@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
+import com.example.TensorFlowObjectDetector.constants.AppConstants
 import com.example.TensorFlowObjectDetector.utils.ObjectAnalysisResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,9 +28,7 @@ class ObjectDetectionAnalyzer(
         private const val PLANT_LABELS_ASSET = "models/plants_labels.txt"
 
         // TODO: Change this back to 1 after validating multi-match behavior in UI.
-        private const val MAX_MATCHES_TO_UI = 5
-        private const val NON_PLANT_MESSAGE =
-            "this is not a plant please read a plant that we can analyze"
+        private const val MAX_MATCHES_TO_UI = AppConstants.Ml.MAX_MATCHES_TO_UI
     }
 
     private val appContext = context.applicationContext
@@ -67,36 +66,47 @@ class ObjectDetectionAnalyzer(
                     )
                 }
                 val objectClassifier =
-                    getOrCreateObjectClassifier(
+                    getOrCreateSharedObjectClassifier(
                         modelConfig = objectConfig,
-                        normalization = InputNormalization.ZERO_TO_ONE
-                    )
+                        normalization = InputNormalization.ZERO_TO_ONE,
+                        currentSession = objectSession
+                    ) { updated -> objectSession = updated }
                 val generalClassifier =
-                    getOrCreateGeneralClassifier(
+                    getOrCreateSharedObjectClassifier(
                         modelConfig = generalConfig,
-                        normalization = InputNormalization.ZERO_TO_255
-                    )
+                        normalization = InputNormalization.ZERO_TO_255,
+                        currentSession = generalSession
+                    ) { updated -> generalSession = updated }
                 val objectPrediction = objectClassifier.classify(bitmap)
 
                 val cropBitmap =
                     objectPrediction.detectionBox?.let { cropToDetection(bitmap, it) } ?: bitmap
                 val cropCreated = cropBitmap !== bitmap
 
-                val generalPrediction = generalClassifier.classify(cropBitmap)
-                if (!isPlantLikeLabel(generalPrediction.label)) {
+                val generalPredictions = generalClassifier.classifyTopK(
+                    bitmap = cropBitmap,
+                    maxResults = MAX_MATCHES_TO_UI
+                )
+                val topGeneralPrediction = generalPredictions.firstOrNull()
+                    ?: ObjectClassificationResult(
+                        label = AppConstants.Ml.UNKNOWN_LABEL,
+                        confidence = AppConstants.Ml.ZERO_CONFIDENCE,
+                        detectionBox = null
+                    )
+
+                if (!isPlantLikeLabel(topGeneralPrediction.label)) {
                     if (cropCreated) cropBitmap.recycle()
                     return@withContext ObjectAnalysisResult.Success(
-                        matches = listOf(
+                        matches = generalPredictions.ifEmpty { listOf(topGeneralPrediction) }.map { prediction ->
                             ObjectDetectionResult(
-                                plantName = generalPrediction.label,
-                                confidence = generalPrediction.confidence,
+                                plantName = prediction.label,
+                                confidence = prediction.confidence,
                                 metadata = mapOf(
-                                    "description" to NON_PLANT_MESSAGE,
                                     "sourceAttribution" to "General model"
                                 ),
                                 detectionBox = objectPrediction.detectionBox
                             )
-                        ),
+                        },
                         modelNotice = if (objectPrediction.detectionBox == null) {
                             "Object detector did not return a box; general model ran on full image."
                         } else {
@@ -182,19 +192,20 @@ class ObjectDetectionAnalyzer(
         return classifier
     }
 
-    private fun getOrCreateObjectClassifier(
+    private fun getOrCreateSharedObjectClassifier(
         modelConfig: ModelConfig,
-        normalization: InputNormalization
+        normalization: InputNormalization,
+        currentSession: ClassifierSession<ObjectClassifier>?,
+        setSession: (ClassifierSession<ObjectClassifier>) -> Unit
     ): ObjectClassifier {
-        val current = objectSession
-        if (current != null &&
-            current.modelAsset == modelConfig.modelAsset &&
-            current.labels == modelConfig.labels
+        if (currentSession != null &&
+            currentSession.modelAsset == modelConfig.modelAsset &&
+            currentSession.labels == modelConfig.labels
         ) {
-            return current.classifier
+            return currentSession.classifier
         }
 
-        current?.interpreter?.close()
+        currentSession?.interpreter?.close()
         val interpreter = createInterpreter(modelConfig.modelAsset)
         val classifier = ObjectClassifier(
             interpreter = interpreter,
@@ -202,40 +213,13 @@ class ObjectDetectionAnalyzer(
             normalization
         )
 
-        objectSession = ClassifierSession(
-            modelAsset = modelConfig.modelAsset,
-            labels = modelConfig.labels,
-            interpreter = interpreter,
-            classifier = classifier
-        )
-        return classifier
-    }
-
-    private fun getOrCreateGeneralClassifier(
-        modelConfig: ModelConfig,
-        normalization: InputNormalization
-    ): ObjectClassifier {
-        val current = generalSession
-        if (current != null &&
-            current.modelAsset == modelConfig.modelAsset &&
-            current.labels == modelConfig.labels
-        ) {
-            return current.classifier
-        }
-
-        current?.interpreter?.close()
-        val interpreter = createInterpreter(modelConfig.modelAsset)
-        val classifier = ObjectClassifier(
-            interpreter = interpreter,
-            labels = modelConfig.labels,
-            normalization = normalization
-        )
-
-        generalSession = ClassifierSession(
-            modelAsset = modelConfig.modelAsset,
-            labels = modelConfig.labels,
-            interpreter = interpreter,
-            classifier = classifier
+        setSession(
+            ClassifierSession(
+                modelAsset = modelConfig.modelAsset,
+                labels = modelConfig.labels,
+                interpreter = interpreter,
+                classifier = classifier
+            )
         )
         return classifier
     }
@@ -292,12 +276,12 @@ class ObjectDetectionAnalyzer(
         } ?: ExifInterface.ORIENTATION_NORMAL
 
         val rotationDegrees = when (orientation) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-            else -> 0f
+            ExifInterface.ORIENTATION_ROTATE_90 -> AppConstants.Image.ROTATION_90
+            ExifInterface.ORIENTATION_ROTATE_180 -> AppConstants.Image.ROTATION_180
+            ExifInterface.ORIENTATION_ROTATE_270 -> AppConstants.Image.ROTATION_270
+            else -> AppConstants.Image.NO_ROTATION
         }
-        if (rotationDegrees == 0f) return bitmap
+        if (rotationDegrees == AppConstants.Image.NO_ROTATION) return bitmap
 
         val rotated = Bitmap.createBitmap(
             bitmap,
@@ -331,10 +315,14 @@ class ObjectDetectionAnalyzer(
         val width = bitmap.width
         val height = bitmap.height
 
-        val left = (box.left * width).toInt().coerceIn(0, width - 1)
-        val top = (box.top * height).toInt().coerceIn(0, height - 1)
-        val right = (box.right * width).toInt().coerceIn(left + 1, width)
-        val bottom = (box.bottom * height).toInt().coerceIn(top + 1, height)
+        val left = (box.left * width).toInt()
+            .coerceIn(AppConstants.General.CONST_ZERO_VALUE, width - AppConstants.General.CONST_ONE_VALUE)
+        val top = (box.top * height).toInt()
+            .coerceIn(AppConstants.General.CONST_ZERO_VALUE, height - AppConstants.General.CONST_ONE_VALUE)
+        val right = (box.right * width).toInt()
+            .coerceIn(left + AppConstants.General.CONST_ONE_VALUE, width)
+        val bottom = (box.bottom * height).toInt()
+            .coerceIn(top + AppConstants.General.CONST_ONE_VALUE, height)
 
         return Bitmap.createBitmap(bitmap, left, top, right - left, bottom - top)
     }
