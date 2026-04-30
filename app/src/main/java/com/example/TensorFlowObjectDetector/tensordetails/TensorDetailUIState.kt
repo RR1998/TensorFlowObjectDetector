@@ -5,8 +5,8 @@ import android.net.Uri
 data class TensorDetailUIState(
     val imageUri: Uri? = null,
     val isLoading: Boolean = false,
-    val plantName: String? = null,
-    val plantDescription: String? = null,
+    val objectName: String? = null,
+    val objectDescription: String? = null,
     val scientificName: String? = null,
     val confidence: Float? = null,
     val sourceAttribution: String? = null,

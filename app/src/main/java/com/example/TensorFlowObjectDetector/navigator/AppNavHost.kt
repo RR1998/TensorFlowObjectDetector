@@ -13,7 +13,7 @@ import com.example.TensorFlowObjectDetector.tensorcamera.TensorCameraScreen
 import com.example.TensorFlowObjectDetector.tensorchat.TensorChatScreen
 import com.example.TensorFlowObjectDetector.tensordetails.TensorDetailScreen
 import com.example.TensorFlowObjectDetector.tensordetails.TensorDetailScreenViewModel
-import com.example.TensorFlowObjectDetector.tensordetails.TensorDetailScreenViewModelFactory
+import com.example.TensorFlowObjectDetector.utils.TensorDetailScreenViewModelFactory
 
 @Composable
 fun AppNavHost(navController: NavHostController, startDestination: String) {

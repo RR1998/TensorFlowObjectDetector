@@ -6,7 +6,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.example.TensorFlowObjectDetector.utils.ObjectAnalysisResult
+import com.example.TensorFlowObjectDetector.tensorflow.processing.classifiers.ObjectDetectionAnalyzer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,8 +71,8 @@ class TensorDetailScreenViewModel(
                         it.copy(
                             isLoading = false,
                             detectionResults = result.matches,
-                            plantName = topMatch.plantName,
-                            plantDescription = topMatch.description,
+                            objectName = topMatch.plantName,
+                            objectDescription = topMatch.description,
                             scientificName = topMatch.scientificName,
                             confidence = topMatch.confidence,
                             sourceAttribution = topMatch.sourceAttribution,
