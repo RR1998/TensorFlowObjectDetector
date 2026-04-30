@@ -24,3 +24,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "TensorFlow Object Detector"
 include(":app")
+include(":domain:detection")
+include(":tensorflow:processing")
+
+project(":domain:detection").projectDir = file("domain/detection")
+project(":tensorflow:processing").projectDir = file("tensorflow/processing")
