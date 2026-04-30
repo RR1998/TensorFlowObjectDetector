@@ -1,0 +1,34 @@
+{
+  "f16": {
+    "name": "F-16 Fighting Falcon",
+    "description": "A lightweight multirole fighter aircraft known for its agility, single-engine design, and wide use by many air forces."
+  },
+  "f22": {
+    "name": "F-22 Raptor",
+    "description": "A fifth-generation stealth air superiority fighter designed for advanced maneuverability, speed, and low radar visibility."
+  },
+  "su57": {
+    "name": "Sukhoi Su-57",
+    "description": "A Russian fifth-generation multirole fighter designed with stealth features, high maneuverability, and advanced avionics."
+  },
+  "mig29": {
+    "name": "MiG-29 Fulcrum",
+    "description": "A Soviet-designed twin-engine fighter aircraft built for air superiority and known for strong maneuverability."
+  },
+  "f14": {
+    "name": "F-14 Tomcat",
+    "description": "A twin-engine, variable-sweep wing fighter aircraft formerly used by the U.S. Navy, famous for fleet defense and long-range interception."
+  },
+  "bf109": {
+    "name": "Messerschmitt Bf 109",
+    "description": "A German World War II fighter aircraft that served as one of the Luftwaffe's main fighters throughout the war."
+  },
+  "spitfire": {
+    "name": "Supermarine Spitfire",
+    "description": "A British World War II fighter aircraft known for its elliptical wings, agility, and role in the Battle of Britain."
+  },
+  "p51": {
+    "name": "P-51 Mustang",
+    "description": "An American World War II long-range fighter aircraft widely recognized for escort missions and high-altitude performance."
+  }
+}
