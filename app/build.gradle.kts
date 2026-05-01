@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
@@ -46,6 +48,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":data:chat"))
     implementation(project(":domain:detection"))
     implementation(project(":tensorflow:processing"))
 
@@ -61,6 +64,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.navigation)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

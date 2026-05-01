@@ -14,6 +14,7 @@ import com.example.TensorFlowObjectDetector.tensordetails.ModelConfig
 import com.example.TensorFlowObjectDetector.tensordetails.ObjectAnalysisResult
 import com.example.TensorFlowObjectDetector.tensordetails.ObjectClassificationResult
 import com.example.TensorFlowObjectDetector.tensordetails.ObjectDetectionResult
+import com.example.TensorFlowObjectDetector.tensordetails.ResultCategory
 import com.example.TensorFlowObjectDetector.tensordetails.VerifiedPlantInfoRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -144,6 +145,7 @@ class ObjectDetectionAnalyzer(
                                 ObjectDetectionResult(
                                     plantName = aircraft?.name ?: prediction.label,
                                     confidence = prediction.confidence,
+                                    category = ResultCategory.AIRCRAFT,
                                     metadata = mapOf(
                                         "description" to description,
                                         "sourceAttribution" to "Aircraft model"
@@ -167,6 +169,7 @@ class ObjectDetectionAnalyzer(
                                 ObjectDetectionResult(
                                     plantName = prediction.label,
                                     confidence = prediction.confidence,
+                                    category = ResultCategory.GENERAL,
                                     metadata = mapOf(
                                         "sourceAttribution" to "General model"
                                     ),

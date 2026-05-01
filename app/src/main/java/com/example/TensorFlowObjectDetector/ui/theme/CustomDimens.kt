@@ -9,6 +9,7 @@ object CustomDimens {
     val dimen6Dp: Dp = 6.dp
     val dimen8Dp: Dp = 8.dp
     val dimen16Dp: Dp = 16.dp
+    val dimen56Dp: Dp = 56.dp
     val dimen32Dp: Dp = 32.dp
     val dimen36Dp: Dp = 36.dp
     val dimen64Dp: Dp = 64.dp

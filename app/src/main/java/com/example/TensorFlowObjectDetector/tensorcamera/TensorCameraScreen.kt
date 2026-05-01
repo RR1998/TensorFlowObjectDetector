@@ -35,12 +35,16 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.TensorFlowObjectDetector.R
+import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
+import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
+import com.example.TensorFlowObjectDetector.tensordetails.ResultCategory
 import com.example.TensorFlowObjectDetector.ui.theme.CustomDimens
 
 @Composable
 fun TensorCameraScreen(
     viewModel: TensorCameraViewModel = viewModel(),
-    onImageAction: (Uri) -> Unit
+    onImageAction: (Uri) -> Unit,
+    onChatContextReady: (ChatContext) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,6 +67,16 @@ fun TensorCameraScreen(
     // Handle captured image navigation
     LaunchedEffect(uiState.capturedImageUri) {
         uiState.capturedImageUri?.let { uri ->
+            onChatContextReady(
+                ChatContext(
+                    currentResult = RecognitionResult(
+                        label = "Captured image",
+                        confidence = 0f,
+                        category = ResultCategory.GENERAL
+                    ),
+                    extraMetadata = mapOf("imageUri" to uri.toString())
+                )
+            )
             onImageAction(uri)
             // Reset the state after navigation
             viewModel.onEvent(TensorCameraUiEvent.ResetCapturedImage)

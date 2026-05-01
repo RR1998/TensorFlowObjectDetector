@@ -29,4 +29,10 @@
     <string name="screen_detail_preview_source_attribution_tulip">Paraphrased from Encyclopaedia Britannica: Tulip</string>
     <string name="screen_detail_preview_source_attribution_daisy">Paraphrased from Encyclopaedia Britannica: Daisy</string>
     <string name="screen_detail_preview_model_notice">Object detector model not installed yet. Running plant-only analysis.</string>
+
+    <string name="screen_chat_context">Context: %1$s</string>
+    <string name="screen_chat_context_empty">No context</string>
+    <string name="screen_chat_write_message">Write a message</string>
+    <string name="screen_chat_send">Send</string>
+    <string name="screen_chat_thinking">thinking</string>
 </resources>

@@ -9,7 +9,7 @@ fun navigationBarAssets(route: String): Pair<Int, String> {
     return when (route) {
         "camera" -> Pair(R.drawable.ic_camera, "Camera")
         "details", "details/{imageUri}" -> Pair(R.drawable.ic_history, "Detail")
-        "chat" -> Pair(R.drawable.ic_chat, "Chat")
+        "chat", "chat?label={label}&confidence={confidence}&category={category}" -> Pair(R.drawable.ic_chat, "Chat")
         else -> Pair(R.drawable.ic_camera, "Camera")
     }
 }

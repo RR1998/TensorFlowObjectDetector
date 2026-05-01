@@ -26,6 +26,8 @@ rootProject.name = "TensorFlow Object Detector"
 include(":app")
 include(":domain:detection")
 include(":tensorflow:processing")
+include(":data:chat")
 
 project(":domain:detection").projectDir = file("domain/detection")
 project(":tensorflow:processing").projectDir = file("tensorflow/processing")
+project(":data:chat").projectDir = file("data/chat")

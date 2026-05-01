@@ -1,10 +1,14 @@
 package com.example.TensorFlowObjectDetector.tensordetails
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,18 +20,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.TensorFlowObjectDetector.R
+import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
+import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
 import com.example.TensorFlowObjectDetector.ui.theme.CustomDimens
 
 @Composable
-fun TensorDetailScreen(viewModel: TensorDetailScreenViewModel) {
+fun TensorDetailScreen(
+    viewModel: TensorDetailScreenViewModel,
+    onSeeAdvancedAnalysis: (ChatContext) -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    TensorDetailContent(uiState = uiState)
+    TensorDetailContent(
+        uiState = uiState,
+        onSeeAdvancedAnalysis = onSeeAdvancedAnalysis
+    )
 }
 
 @Composable
 fun TensorDetailContent(
+    modifier: Modifier = Modifier,
     uiState: TensorDetailUIState,
-    modifier: Modifier = Modifier
+    onSeeAdvancedAnalysis: (ChatContext) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier
@@ -91,6 +104,33 @@ fun TensorDetailContent(
             }
             items(uiState.detectionResults.drop(0)) { result ->
                 ExtraCoincidencesItem(result)
+            }
+        }
+
+        item {
+            val topMatch = uiState.detectionResults.firstOrNull()
+            Button(
+                onClick = {
+                    val context = ChatContext(
+                        currentResult = RecognitionResult(
+                            label = topMatch?.plantName ?: (uiState.objectName ?: "Unknown"),
+                            confidence = topMatch?.confidence ?: (uiState.confidence ?: 0f),
+                            category = topMatch?.category ?: ResultCategory.GENERAL
+                        ),
+                        extraMetadata = buildMap {
+                            uiState.imageUri?.toString()?.let { put("imageUri", it) }
+                        }
+                    )
+                    onSeeAdvancedAnalysis(context)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(CustomDimens.dimen32Dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(text = "see advance analysis")
             }
         }
     }

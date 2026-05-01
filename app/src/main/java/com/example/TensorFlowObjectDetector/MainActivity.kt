@@ -20,6 +20,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -28,6 +31,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.TensorFlowObjectDetector.navigator.AppNavHost
 import com.example.TensorFlowObjectDetector.navigator.Screen
+import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
+import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
+import com.example.TensorFlowObjectDetector.tensordetails.ResultCategory
 import com.example.TensorFlowObjectDetector.ui.theme.MyApplicationTheme
 import com.example.TensorFlowObjectDetector.utils.navigationBarAssets
 
@@ -48,6 +54,17 @@ fun MainActivityContent() {
         val navController = rememberNavController()
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route.orEmpty()
+        var currentChatContext by remember {
+            mutableStateOf(
+                ChatContext(
+                    currentResult = RecognitionResult(
+                        label = "Unknown",
+                        confidence = 0f,
+                        category = ResultCategory.GENERAL
+                    )
+                )
+            )
+        }
         val items = listOf(
             Screen.Camera,
             Screen.Details,
@@ -61,7 +78,7 @@ fun MainActivityContent() {
                     currentRoute.startsWith("details/") || currentRoute == Screen.Details.route ->
                         stringResource(R.string.screen_detail_result)
 
-                    currentRoute == Screen.Chat.route -> "Chat"
+                    currentRoute.startsWith("chat") -> "Chat"
                     else -> ""
                 }
                 if (currentRoute != Screen.Camera.route) {
@@ -99,7 +116,7 @@ fun MainActivityContent() {
                             Screen.Details -> currentRoute.startsWith("details/")
                                     || currentRoute == Screen.Details.route
 
-                            Screen.Chat -> currentRoute == Screen.Chat.route
+                            Screen.Chat -> currentRoute.startsWith("chat")
                         }
                         NavigationBarItem(
                             colors = NavigationBarItemDefaults.colors(
@@ -118,7 +135,12 @@ fun MainActivityContent() {
                             selected = isSelected,
                             onClick = {
                                 if (!isSelected) {
-                                    navController.navigate(screen.route) {
+                                    val targetRoute = if (screen == Screen.Chat) {
+                                        Screen.Chat.createRoute(currentChatContext)
+                                    } else {
+                                        screen.route
+                                    }
+                                    navController.navigate(targetRoute) {
                                         popUpTo(navController.graph.startDestinationId) {
                                             saveState = true
                                         }
@@ -135,7 +157,8 @@ fun MainActivityContent() {
             Column(modifier = Modifier.padding(innerPadding)) {
                 AppNavHost(
                     navController = navController,
-                    startDestination = Screen.Camera.route
+                    startDestination = Screen.Camera.route,
+                    onChatContextReady = { context -> currentChatContext = context }
                 )
             }
         }

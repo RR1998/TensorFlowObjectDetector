@@ -6,6 +6,7 @@ import androidx.core.graphics.get
 import androidx.core.graphics.scale
 import com.example.TensorFlowObjectDetector.constants.AppConstants
 import com.example.TensorFlowObjectDetector.tensordetails.ObjectDetectionResult
+import com.example.TensorFlowObjectDetector.tensordetails.ResultCategory
 import com.example.TensorFlowObjectDetector.tensordetails.VerifiedPlantInfoRepository
 import com.example.TensorFlowObjectDetector.tensordetails.normalizePlantLabel
 import org.tensorflow.lite.DataType
@@ -36,6 +37,7 @@ class PlantClassifier(
                 ObjectDetectionResult(
                     plantName = metadata["commonName"] ?: rawLabel,
                     confidence = probabilities[index],
+                    category = ResultCategory.PLANT,
                     metadata = metadata
                 )
             }
