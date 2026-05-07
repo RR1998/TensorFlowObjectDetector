@@ -2,6 +2,7 @@ package com.example.TensorFlowObjectDetector.constants
 
 object AppConstants {
     object General {
+        const val IMAGE_URI_KEY = "imageUri"
         const val CONST_ZERO_VALUE = 0
         const val CONST_ONE_VALUE = 1
         const val CONST_TWO_VALUE = 2
