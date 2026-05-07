@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,14 +30,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ZERO_VALUE_FLOAT
 import com.example.TensorFlowObjectDetector.navigator.AppNavHost
 import com.example.TensorFlowObjectDetector.navigator.Screen
 import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
 import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
 import com.example.TensorFlowObjectDetector.tensordetails.ResultCategory
 import com.example.TensorFlowObjectDetector.ui.theme.MyApplicationTheme
+import com.example.TensorFlowObjectDetector.utils.CONTENT_DESCRIPTION_BACK
+import com.example.TensorFlowObjectDetector.utils.DEFAULT_LABEL_UNKNOWN
+import com.example.TensorFlowObjectDetector.utils.NAV_LABEL_CHAT
+import com.example.TensorFlowObjectDetector.utils.ROUTE_CHAT
+import com.example.TensorFlowObjectDetector.utils.ROUTE_DETAILS
 import com.example.TensorFlowObjectDetector.utils.navigationBarAssets
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,8 +67,8 @@ fun MainActivityContent() {
             mutableStateOf(
                 ChatContext(
                     currentResult = RecognitionResult(
-                        label = "Unknown",
-                        confidence = 0f,
+                        label = DEFAULT_LABEL_UNKNOWN,
+                        confidence = CONST_ZERO_VALUE_FLOAT,
                         category = ResultCategory.GENERAL
                     )
                 )
@@ -72,13 +81,15 @@ fun MainActivityContent() {
         )
 
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding(),
             topBar = {
                 val title = when {
-                    currentRoute.startsWith("details/") || currentRoute == Screen.Details.route ->
+                    currentRoute.startsWith(ROUTE_DETAILS) || currentRoute == Screen.Details.route ->
                         stringResource(R.string.screen_detail_result)
 
-                    currentRoute.startsWith("chat") -> "Chat"
+                    currentRoute.startsWith(ROUTE_CHAT) -> NAV_LABEL_CHAT
                     else -> ""
                 }
                 if (currentRoute != Screen.Camera.route) {
@@ -95,7 +106,7 @@ fun MainActivityContent() {
                                 IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.ic_arrow_back),
-                                        contentDescription = "Back"
+                                        contentDescription = CONTENT_DESCRIPTION_BACK
                                     )
                                 }
                             }
@@ -113,10 +124,10 @@ fun MainActivityContent() {
                         val assets = navigationBarAssets(screen.route)
                         val isSelected = when (screen) {
                             Screen.Camera -> currentRoute == Screen.Camera.route
-                            Screen.Details -> currentRoute.startsWith("details/")
+                            Screen.Details -> currentRoute.startsWith(ROUTE_DETAILS)
                                     || currentRoute == Screen.Details.route
 
-                            Screen.Chat -> currentRoute.startsWith("chat")
+                            Screen.Chat -> currentRoute.startsWith(ROUTE_CHAT)
                         }
                         NavigationBarItem(
                             colors = NavigationBarItemDefaults.colors(

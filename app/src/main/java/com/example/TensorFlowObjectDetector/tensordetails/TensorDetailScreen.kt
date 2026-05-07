@@ -1,8 +1,8 @@
 package com.example.TensorFlowObjectDetector.tensordetails
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,9 +20,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.TensorFlowObjectDetector.R
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ONE_VALUE
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ZERO_VALUE
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ZERO_VALUE_FLOAT
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.IMAGE_URI_KEY
 import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
 import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
 import com.example.TensorFlowObjectDetector.ui.theme.CustomDimens
+import com.example.TensorFlowObjectDetector.utils.DEFAULT_LABEL_UNKNOWN
 
 @Composable
 fun TensorDetailScreen(
@@ -94,7 +99,7 @@ fun TensorDetailContent(
             }
         }
 
-        if (uiState.detectionResults.size > 1) {
+        if (uiState.detectionResults.size > CONST_ONE_VALUE) {
             item {
                 Text(
                     text = stringResource(id = R.string.screen_detail_other_verified_matches),
@@ -102,35 +107,44 @@ fun TensorDetailContent(
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            items(uiState.detectionResults.drop(0)) { result ->
+            items(uiState.detectionResults.drop(CONST_ZERO_VALUE)) { result ->
                 ExtraCoincidencesItem(result)
             }
         }
 
-        item {
-            val topMatch = uiState.detectionResults.firstOrNull()
-            Button(
-                onClick = {
-                    val context = ChatContext(
-                        currentResult = RecognitionResult(
-                            label = topMatch?.plantName ?: (uiState.objectName ?: "Unknown"),
-                            confidence = topMatch?.confidence ?: (uiState.confidence ?: 0f),
-                            category = topMatch?.category ?: ResultCategory.GENERAL
-                        ),
-                        extraMetadata = buildMap {
-                            uiState.imageUri?.toString()?.let { put("imageUri", it) }
-                        }
+        if (uiState.imageUri != null) {
+            item {
+                val topMatch = uiState.detectionResults.firstOrNull()
+                Button(
+                    onClick = {
+                        val context = ChatContext(
+                            currentResult = RecognitionResult(
+                                label = topMatch?.plantName ?: (uiState.objectName
+                                    ?: DEFAULT_LABEL_UNKNOWN),
+                                confidence = topMatch?.confidence ?: (
+                                        uiState.confidence
+                                            ?: CONST_ZERO_VALUE_FLOAT),
+                                category = topMatch?.category ?: ResultCategory.GENERAL
+                            ),
+                            extraMetadata = buildMap {
+                                uiState.imageUri.toString().let { put(IMAGE_URI_KEY, it) }
+                            }
+                        )
+                        onSeeAdvancedAnalysis(context)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(CustomDimens.dimen32Dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     )
-                    onSeeAdvancedAnalysis(context)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(CustomDimens.dimen32Dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(text = "see advance analysis")
+                ) {
+                    Text(
+                        text = stringResource(
+                            id = R.string.screen_detail_see_advanced_analysis
+                        )
+                    )
+                }
             }
         }
     }

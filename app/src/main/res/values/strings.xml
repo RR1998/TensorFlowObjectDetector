@@ -15,6 +15,8 @@
     <string name="screen_detail_scientific_name">Scientific name: %1$s</string>
     <string name="screen_detail_other_verified_matches">Other Verified Matches</string>
     <string name="screen_detail_selected_image">Selected image</string>
+    <string name="screen_detail_no_image_taken_yet">No image has been taken yet.</string>
+    <string name="screen_detail_see_advanced_analysis">See advanced analysis</string>
 
     <string name="screen_detail_preview_plant_name_rose">Rose</string>
     <string name="screen_detail_preview_plant_name_tulip">Tulip</string>
@@ -35,4 +37,9 @@
     <string name="screen_chat_write_message">Write a message</string>
     <string name="screen_chat_send">Send</string>
     <string name="screen_chat_thinking">thinking</string>
+    <string name="screen_chat_no_image_to_analyze">Take a picture or choose one from your gallery to continue with chat analysis.</string>
+    <string name="screen_chat_preview_message_1">What is this flower?</string>
+    <string name="screen_chat_preview_message_2">It looks like a rose with high confidence. It usually needs good sunlight and regular watering.</string>
+    <string name="screen_chat_preview_message_3">Any quick care tips?</string>
+    <string name="screen_chat_preview_message_4">Keep soil moist but not waterlogged, prune dead blooms, and fertilize lightly every few weeks.</string>
 </resources>

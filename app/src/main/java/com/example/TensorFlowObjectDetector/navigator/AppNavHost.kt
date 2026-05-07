@@ -2,25 +2,25 @@ package com.example.TensorFlowObjectDetector.navigator
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.TensorFlowObjectDetector.di.ChatEntryPoint
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ZERO_VALUE_FLOAT
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.IMAGE_URI_KEY
 import com.example.TensorFlowObjectDetector.tensorcamera.TensorCameraScreen
 import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
 import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
 import com.example.TensorFlowObjectDetector.tensorchat.TensorChatScreen
-import com.example.TensorFlowObjectDetector.tensorchat.TensorChatViewModel
-import com.example.TensorFlowObjectDetector.tensorchat.TensorChatViewModelFactory
 import com.example.TensorFlowObjectDetector.tensordetails.ResultCategory
 import com.example.TensorFlowObjectDetector.tensordetails.TensorDetailScreen
-import com.example.TensorFlowObjectDetector.tensordetails.TensorDetailScreenViewModel
-import com.example.TensorFlowObjectDetector.utils.TensorDetailScreenViewModelFactory
-import dagger.hilt.android.EntryPointAccessors
+import com.example.TensorFlowObjectDetector.utils.ARG_CATEGORY
+import com.example.TensorFlowObjectDetector.utils.ARG_CONFIDENCE
+import com.example.TensorFlowObjectDetector.utils.ARG_LABEL
+import com.example.TensorFlowObjectDetector.utils.DEFAULT_LABEL_UNKNOWN
+import com.example.TensorFlowObjectDetector.utils.NULL_STRING_VALUE
 
 @Composable
 fun AppNavHost(
@@ -28,13 +28,17 @@ fun AppNavHost(
     startDestination: String,
     onChatContextReady: (ChatContext) -> Unit = {}
 ) {
-    val application = LocalContext.current.applicationContext as android.app.Application
-
     NavHost(navController = navController, startDestination = startDestination) {
         composable(Screen.Camera.route) {
             TensorCameraScreen(
                 onImageAction = { uri ->
-                    navController.navigate(Screen.Details.createRoute(Uri.encode(uri.toString())))
+                    navController.navigate(
+                        route = Screen.Details.createRoute(
+                            imageUri = Uri.encode(
+                                uri.toString()
+                            )
+                        )
+                    )
                 },
                 onChatContextReady = onChatContextReady
             )
@@ -42,16 +46,32 @@ fun AppNavHost(
         composable(
             route = Screen.Chat.navRoute,
             arguments = listOf(
-                navArgument("label") { type = NavType.StringType; defaultValue = "Unknown" },
-                navArgument("confidence") { type = NavType.FloatType; defaultValue = 0f },
-                navArgument("category") { type = NavType.StringType; defaultValue = ResultCategory.GENERAL.name },
-                navArgument("imageUri") { type = NavType.StringType; defaultValue = "" }
+                navArgument(ARG_LABEL) {
+                    type = NavType.StringType; defaultValue = DEFAULT_LABEL_UNKNOWN
+                },
+                navArgument(ARG_CONFIDENCE) {
+                    type = NavType.FloatType; defaultValue = CONST_ZERO_VALUE_FLOAT
+                },
+                navArgument(ARG_CATEGORY) {
+                    type = NavType.StringType; defaultValue = ResultCategory.GENERAL.name
+                },
+                navArgument(IMAGE_URI_KEY) {
+                    type = NavType.StringType
+                    defaultValue = ""
+                    nullable = true
+                }
             )
         ) { backStackEntry ->
-            val label = backStackEntry.arguments?.getString("label").orEmpty()
-            val confidence = backStackEntry.arguments?.getFloat("confidence") ?: 0f
-            val categoryRaw = backStackEntry.arguments?.getString("category")
-            val imageUri = backStackEntry.arguments?.getString("imageUri").orEmpty()
+            val label = backStackEntry.arguments?.getString(ARG_LABEL).orEmpty()
+            val confidence = backStackEntry.arguments?.getFloat(ARG_CONFIDENCE)
+                ?: CONST_ZERO_VALUE_FLOAT
+            val categoryRaw = backStackEntry.arguments?.getString(ARG_CATEGORY)
+            val imageUriRaw = backStackEntry.arguments?.getString(IMAGE_URI_KEY)
+            val imageUri = imageUriRaw
+                ?.takeUnless { it.isBlank() }
+                ?.takeUnless {
+                    it.equals(NULL_STRING_VALUE, ignoreCase = true) || it == "{$IMAGE_URI_KEY}"
+                }
             val category = runCatching { ResultCategory.valueOf(categoryRaw.orEmpty()) }
                 .getOrDefault(ResultCategory.GENERAL)
             val chatContext = ChatContext(
@@ -61,34 +81,24 @@ fun AppNavHost(
                     category = category
                 ),
                 extraMetadata = buildMap {
-                    if (imageUri.isNotBlank()) put("imageUri", imageUri)
+                    imageUri?.let { put(IMAGE_URI_KEY, it) }
                 }
-            )
-            val chatEntryPoint = EntryPointAccessors.fromApplication(
-                application,
-                ChatEntryPoint::class.java
-            )
-            val chatViewModel: TensorChatViewModel = viewModel(
-                factory = TensorChatViewModelFactory(chatEntryPoint.sendPromptUseCase())
             )
             TensorChatScreen(
                 chatContext = chatContext,
-                chatViewModel = chatViewModel
+                chatViewModel = hiltViewModel()
             )
         }
         composable(
             route = Screen.Details.route,
-            arguments = listOf(navArgument(TensorDetailScreenViewModel.IMAGE_URI_KEY) { type = NavType.StringType })
+            arguments = listOf(navArgument(IMAGE_URI_KEY) {
+                type = NavType.StringType
+                defaultValue = ""
+                nullable = true
+            })
         ) { backStackEntry ->
             TensorDetailScreen(
-                viewModel = viewModel(
-                    viewModelStoreOwner = backStackEntry,
-                    factory = TensorDetailScreenViewModelFactory(
-                        application = application,
-                        owner = backStackEntry,
-                        defaultArgs = backStackEntry.arguments
-                    )
-                ),
+                viewModel = hiltViewModel(backStackEntry),
                 onSeeAdvancedAnalysis = { chatContext ->
                     navController.navigate(Screen.Chat.createRoute(chatContext))
                 }

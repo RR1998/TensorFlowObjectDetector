@@ -6,21 +6,21 @@ import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.IMAGE_URI_KEY
 import com.example.TensorFlowObjectDetector.tensorflow.processing.classifiers.ObjectDetectionAnalyzer
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class TensorDetailScreenViewModel(
+@HiltViewModel
+class TensorDetailScreenViewModel @Inject constructor(
     application: Application,
     savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
-
-    companion object {
-        const val IMAGE_URI_KEY = "imageUri"
-    }
 
     private var analyzer: ObjectDetectionAnalyzer? = null
     private val _uiState = MutableStateFlow(TensorDetailUIState())
@@ -28,10 +28,14 @@ class TensorDetailScreenViewModel(
 
     init {
         val rawImageUri = savedStateHandle.get<String>(IMAGE_URI_KEY)
-        if (rawImageUri.isNullOrBlank()) {
-            _uiState.update { it.copy(errorMessage = "No image URI was provided for the detail screen.") }
+        val normalizedImageUri = rawImageUri
+            ?.takeUnless { it.isBlank() }
+            ?.takeUnless { it == "{$IMAGE_URI_KEY}" || it.equals("null", ignoreCase = true) }
+
+        if (normalizedImageUri == null) {
+            _uiState.update { it.copy(imageUri = null, errorMessage = null) }
         } else {
-            val imageUri = rawImageUri.toUri()
+            val imageUri = normalizedImageUri.toUri()
             _uiState.update { it.copy(imageUri = imageUri) }
             analyzeImage(imageUri)
         }

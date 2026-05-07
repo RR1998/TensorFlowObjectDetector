@@ -33,8 +33,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.TensorFlowObjectDetector.R
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.IMAGE_URI_KEY
 import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
 import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
 import com.example.TensorFlowObjectDetector.tensordetails.ResultCategory
@@ -42,7 +43,7 @@ import com.example.TensorFlowObjectDetector.ui.theme.CustomDimens
 
 @Composable
 fun TensorCameraScreen(
-    viewModel: TensorCameraViewModel = viewModel(),
+    viewModel: TensorCameraViewModel = hiltViewModel(),
     onImageAction: (Uri) -> Unit,
     onChatContextReady: (ChatContext) -> Unit = {}
 ) {
@@ -74,7 +75,7 @@ fun TensorCameraScreen(
                         confidence = 0f,
                         category = ResultCategory.GENERAL
                     ),
-                    extraMetadata = mapOf("imageUri" to uri.toString())
+                    extraMetadata = mapOf(IMAGE_URI_KEY to uri.toString())
                 )
             )
             onImageAction(uri)

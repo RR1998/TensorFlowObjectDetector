@@ -2,22 +2,22 @@ package com.example.TensorFlowObjectDetector.tensorchat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.IMAGE_URI_KEY
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class TensorChatViewModel(
+@HiltViewModel
+class TensorChatViewModel @Inject constructor(
     private val sendPromptUseCase: SendPromptUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TensorChatUiState())
     val uiState: StateFlow<TensorChatUiState> = _uiState.asStateFlow()
-
-    fun setRecognitionResult(result: RecognitionResult) {
-        setChatContext(ChatContext(currentResult = result))
-    }
 
     fun setChatContext(context: ChatContext) {
         _uiState.update { state ->
@@ -50,7 +50,8 @@ class TensorChatViewModel(
         The user asks:
         "$userMessage"
 
-        Answer clearly. If confidence is low, mention that the result may be uncertain.
+        Answer clearly. If confidence is low, mention that the result may be
+        uncertain and describe what you determine with more precision what do you see
     """.trimIndent()
     }
 
@@ -71,7 +72,7 @@ class TensorChatViewModel(
         userMessage: String,
         markInitialPromptAsSent: Boolean = false
     ) {
-        val imageUri = _uiState.value.chatContext?.extraMetadata?.get("imageUri")
+        val imageUri = _uiState.value.chatContext?.extraMetadata?.get(IMAGE_URI_KEY)
         if (_uiState.value.chatContext == null) return
         val trimmedMessage = userMessage.trim()
         if (trimmedMessage.isBlank()) return

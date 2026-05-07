@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,8 +27,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -54,7 +57,7 @@ fun DetectionImageWithOverlay(
         val aspectRatio = imageSize
             ?.takeIf { it.width > CONST_ZERO_VALUE && it.height > CONST_ZERO_VALUE }
             ?.let { it.width.toFloat() / it.height.toFloat() }
-            ?: 1f
+            ?: CONST_ONE_VALUE_FLOAT
         val widthAtMaxHeight = maxCardHeight * aspectRatio
         val cardHeight = if (widthAtMaxHeight <= availableWidth) {
             maxCardHeight
@@ -148,6 +151,44 @@ fun DetectionImageWithOverlay(
                     }
                 }
             }
+        }
+    } ?: run {
+        DetectionImageWithOverlayScreenEmptyState()
+    }
+}
+
+@Composable
+private fun DetectionImageWithOverlayScreenEmptyState() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(CustomDimens.dimen280Dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = CustomDimens.dimen8Dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(CustomDimens.dimen16Dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_camera),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = CustomDimens.dimen8Dp)
+            )
+            Text(
+                text = stringResource(id = R.string.screen_detail_no_image_taken_yet),
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
