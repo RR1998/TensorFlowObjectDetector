@@ -121,6 +121,7 @@ class TensorChatViewModel @Inject constructor(
         }
     }
 
+    // Use this function instead of sendPromptWithCloudUseCase when you want to run gemini locally
     private suspend fun sendPromptWithDefaultUseCase(prompt: String, imageUri: String?): String {
         return sendPromptUseCase(prompt, imageUri)
     }
