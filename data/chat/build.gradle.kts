@@ -9,6 +9,11 @@ android {
             "GEMINI_API_KEY",
             "\"${project.findProperty("GEMINI_API_KEY") ?: ""}\""
         )
+        buildConfigField(
+            "String",
+            "CLOUD_RUN_BASE_URL",
+            "\"${project.findProperty("CLOUD_RUN_BASE_URL") ?: "https://example.com/"}\""
+        )
     }
     buildFeatures {
         buildConfig = true
