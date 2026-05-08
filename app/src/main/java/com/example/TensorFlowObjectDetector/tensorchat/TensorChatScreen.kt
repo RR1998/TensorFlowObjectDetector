@@ -20,6 +20,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -28,6 +33,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -69,6 +77,7 @@ fun TensorChatScreen(
     TensorChatContent(
         uiState = uiState,
         onMessageInputChanged = chatViewModel::onMessageInputChanged,
+        onProviderSelected = chatViewModel::onProviderSelected,
         onSendMessage = chatViewModel::sendMessage,
         hasImage = hasImage,
         listState = listState
@@ -76,13 +85,17 @@ fun TensorChatScreen(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun TensorChatContent(
     uiState: TensorChatUiState,
     onMessageInputChanged: (String) -> Unit,
+    onProviderSelected: (ChatProviderOption) -> Unit,
     onSendMessage: (String) -> Unit,
     hasImage: Boolean,
     listState: androidx.compose.foundation.lazy.LazyListState = rememberLazyListState()
 ) {
+    var isProviderMenuExpanded by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -154,10 +167,46 @@ private fun TensorChatContent(
                     horizontalArrangement = Arrangement.spacedBy(CustomDimens.dimen8Dp)
                 ) {
                     Column(modifier = Modifier.weight(CONST_ONE_VALUE_FLOAT)) {
+                        ExposedDropdownMenuBox(
+                            expanded = isProviderMenuExpanded,
+                            onExpandedChange = { isProviderMenuExpanded = !isProviderMenuExpanded }
+                        ) {
+                            OutlinedTextField(
+                                value = uiState.selectedProvider.label,
+                                onValueChange = {},
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(),
+                                readOnly = true,
+                                enabled = !uiState.isLoading,
+                                singleLine = true,
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isProviderMenuExpanded)
+                                },
+                                shape = RoundedCornerShape(CustomDimens.dimen32Dp)
+                            )
+                            DropdownMenu(
+                                expanded = isProviderMenuExpanded,
+                                onDismissRequest = { isProviderMenuExpanded = false }
+                            ) {
+                                ChatProviderOption.entries.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(option.label) },
+                                        onClick = {
+                                            onProviderSelected(option)
+                                            isProviderMenuExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
                         OutlinedTextField(
                             value = uiState.messageInput,
                             onValueChange = onMessageInputChanged,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = CustomDimens.dimen8Dp),
                             shape = RoundedCornerShape(CustomDimens.dimen32Dp),
                             placeholder = { Text(stringResource(id = R.string.screen_chat_write_message)) },
                             enabled = !uiState.isLoading,
@@ -186,6 +235,7 @@ private fun TensorChatContent(
 
 @Preview(showBackground = true, widthDp = 360, heightDp = 780)
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun TensorChatScreenPreview() {
     MyApplicationTheme {
         TensorChatContent(
@@ -219,6 +269,7 @@ private fun TensorChatScreenPreview() {
                 )
             ),
             onMessageInputChanged = {},
+            onProviderSelected = {},
             onSendMessage = {},
             hasImage = true
         )

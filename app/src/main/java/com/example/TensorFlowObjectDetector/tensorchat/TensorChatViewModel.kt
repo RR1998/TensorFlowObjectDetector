@@ -37,6 +37,10 @@ class TensorChatViewModel @Inject constructor(
         _uiState.update { it.copy(messageInput = value) }
     }
 
+    fun onProviderSelected(provider: ChatProviderOption) {
+        _uiState.update { it.copy(selectedProvider = provider) }
+    }
+
     fun buildPrompt(userMessage: String): String {
         val context = _uiState.value.chatContext ?: return userMessage
         return """
@@ -92,7 +96,12 @@ class TensorChatViewModel @Inject constructor(
                     errorMessage = null
                 )
             }
-            runCatching { sendPromptWithCloudUseCase(prompt, imageUri) }
+            runCatching {
+                when (_uiState.value.selectedProvider) {
+                    ChatProviderOption.GEMINI_DIRECT -> sendPromptWithDefaultUseCase(prompt, imageUri)
+                    ChatProviderOption.GEMINI_CLOUD -> sendPromptWithCloudUseCase(prompt, imageUri)
+                }
+            }
                 .onSuccess { response ->
                     _uiState.update {
                         it.copy(
