@@ -13,7 +13,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TensorChatViewModel @Inject constructor(
-    private val sendPromptUseCase: SendPromptUseCase
+    private val sendPromptUseCase: SendPromptUseCase,
+    private val sendPromptCloudUseCase: SendPromptCloudUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TensorChatUiState())
@@ -91,7 +92,7 @@ class TensorChatViewModel @Inject constructor(
                     errorMessage = null
                 )
             }
-            runCatching { sendPromptUseCase(prompt, imageUri) }
+            runCatching { sendPromptWithCloudUseCase(prompt, imageUri) }
                 .onSuccess { response ->
                     _uiState.update {
                         it.copy(
@@ -118,5 +119,13 @@ class TensorChatViewModel @Inject constructor(
                     }
                 }
         }
+    }
+
+    private suspend fun sendPromptWithDefaultUseCase(prompt: String, imageUri: String?): String {
+        return sendPromptUseCase(prompt, imageUri)
+    }
+
+    private suspend fun sendPromptWithCloudUseCase(prompt: String, imageUri: String?): String {
+        return sendPromptCloudUseCase(prompt, imageUri)
     }
 }
