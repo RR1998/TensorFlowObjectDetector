@@ -154,64 +154,7 @@ Expected response shape:
 }
 ```
 
-## 9. Android App Integration
-
-The Android app should call the Cloud Run backend, not Gemini directly.
-
-### Retrofit Base URL
-
-```kotlin
-private const val BASE_URL = "https://YOUR_CLOUD_RUN_URL/"
-```
-
-The trailing `/` is required.
-
-### Retrofit Service
-
-```kotlin
-interface CloudRunChatApiService {
-
-    @POST("chat")
-    suspend fun sendMessage(
-        @Body request: ChatBackendRequest
-    ): ChatBackendResponse
-}
-```
-
-### Request/Response DTOs
-
-```kotlin
-data class ChatBackendRequest(
-    val message: String,
-    val image: ChatBackendImage? = null,
-    val conversationId: String? = null
-)
-
-data class ChatBackendImage(
-    val mimeType: String,
-    val base64Data: String
-)
-
-data class ChatBackendResponse(
-    val answer: String,
-    val conversationId: String? = null
-)
-```
-
-The Android app should no longer contain:
-
-```text
-Gemini API key
-Gemini model names
-Gemini endpoint
-x-goog-api-key header
-Gemini request/response DTOs
-Model fallback logic
-```
-
-Those belong in the backend.
-
-## 10. View Logs
+## 9. View Logs
 
 Read recent logs:
 
@@ -237,7 +180,7 @@ Google Cloud Console
 → Logs
 ```
 
-## 11. Keep Service Ready but Idle
+## 10. Keep Service Ready but Idle
 
 To keep the service deployed but allow it to scale down:
 
@@ -248,7 +191,7 @@ gcloud run services update smart-image-chat-api \
   --max-instances 1
 ```
 
-## 12. Disable Service Until Demo Day
+## 11. Disable Service Until Demo Day
 
 To stop serving traffic without deleting the service:
 
@@ -268,7 +211,7 @@ gcloud run services update smart-image-chat-api \
   --max-instances 1
 ```
 
-## 13. Optional: Block Public Access
+## 12. Optional: Block Public Access
 
 If the service should not be publicly callable while not in use:
 
@@ -288,7 +231,7 @@ gcloud run services add-iam-policy-binding smart-image-chat-api \
   --role="roles/run.invoker"
 ```
 
-## 14. Common Issues
+## 13. Common Issues
 
 ### Container failed to start on port 8080
 
@@ -326,7 +269,7 @@ Check:
 5. Cloud Run logs show the incoming request
 ```
 
-## 15. Cost Control Notes
+## 14. Cost Control Notes
 
 For testing/demo usage:
 
