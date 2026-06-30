@@ -42,7 +42,7 @@ class DirectGeminiChatRepository(
         return try {
             requestWithModel(MODEL_FLASH_2_5, request)
         } catch (firstException: HttpException) {
-            if (firstException.code() != 429) throw firstException
+                if (firstException.code() != 429) throw firstException
             try {
                 requestWithModel(MODEL_FLASH_2_0, request)
             } catch (secondException: HttpException) {

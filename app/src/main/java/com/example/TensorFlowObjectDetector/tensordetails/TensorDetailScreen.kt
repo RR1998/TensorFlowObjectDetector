@@ -13,6 +13,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,12 +23,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.TensorFlowObjectDetector.R
 import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ONE_VALUE
 import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ZERO_VALUE
-import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ZERO_VALUE_FLOAT
-import com.example.TensorFlowObjectDetector.constants.AppConstants.General.IMAGE_URI_KEY
 import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
-import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
 import com.example.TensorFlowObjectDetector.ui.theme.CustomDimens
-import com.example.TensorFlowObjectDetector.utils.DEFAULT_LABEL_UNKNOWN
 
 @Composable
 fun TensorDetailScreen(
@@ -35,9 +32,18 @@ fun TensorDetailScreen(
     onSeeAdvancedAnalysis: (ChatContext) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(viewModel) {
+        viewModel.uiAction.collect { action ->
+            when (action) {
+                is TensorDetailUiAction.NavigateToAdvancedAnalysis -> {
+                    onSeeAdvancedAnalysis(action.chatContext)
+                }
+            }
+        }
+    }
     TensorDetailContent(
         uiState = uiState,
-        onSeeAdvancedAnalysis = onSeeAdvancedAnalysis
+        onEvent = viewModel::onEvent
     )
 }
 
@@ -45,7 +51,7 @@ fun TensorDetailScreen(
 fun TensorDetailContent(
     modifier: Modifier = Modifier,
     uiState: TensorDetailUIState,
-    onSeeAdvancedAnalysis: (ChatContext) -> Unit = {}
+    onEvent: (TensorDetailUiEvent) -> Unit = {}
 ) {
     LazyColumn(
         modifier = modifier
@@ -71,20 +77,20 @@ fun TensorDetailContent(
             }
         }
 
-        uiState.modelNotice?.let { modelNotice ->
-            item {
-                InfoCard(
-                    title = stringResource(id = R.string.screen_detail_model_notice),
-                    body = modelNotice
-                )
-            }
-        }
-
         uiState.objectDescription?.let { objectDescription ->
             item {
                 InfoCard(
                     title = stringResource(R.string.screen_detail_information),
                     body = objectDescription
+                )
+            }
+        }
+
+        uiState.modelNotice?.let { modelNotice ->
+            item {
+                InfoCard(
+                    title = stringResource(id = R.string.screen_detail_model_notice),
+                    body = modelNotice
                 )
             }
         }
@@ -114,23 +120,9 @@ fun TensorDetailContent(
 
         if (uiState.imageUri != null) {
             item {
-                val topMatch = uiState.detectionResults.firstOrNull()
                 Button(
                     onClick = {
-                        val context = ChatContext(
-                            currentResult = RecognitionResult(
-                                label = topMatch?.plantName ?: (uiState.objectName
-                                    ?: DEFAULT_LABEL_UNKNOWN),
-                                confidence = topMatch?.confidence ?: (
-                                        uiState.confidence
-                                            ?: CONST_ZERO_VALUE_FLOAT),
-                                category = topMatch?.category ?: ResultCategory.GENERAL
-                            ),
-                            extraMetadata = buildMap {
-                                uiState.imageUri.toString().let { put(IMAGE_URI_KEY, it) }
-                            }
-                        )
-                        onSeeAdvancedAnalysis(context)
+                        onEvent(TensorDetailUiEvent.OnSeeAdvancedAnalysisClicked)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(CustomDimens.dimen32Dp),

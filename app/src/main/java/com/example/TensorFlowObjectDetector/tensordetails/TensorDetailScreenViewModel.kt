@@ -7,10 +7,17 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.TensorFlowObjectDetector.constants.AppConstants.General.IMAGE_URI_KEY
+import com.example.TensorFlowObjectDetector.constants.AppConstants.General.CONST_ZERO_VALUE_FLOAT
+import com.example.TensorFlowObjectDetector.tensorchat.ChatContext
+import com.example.TensorFlowObjectDetector.tensorchat.RecognitionResult
 import com.example.TensorFlowObjectDetector.tensorflow.processing.classifiers.ObjectDetectionAnalyzer
+import com.example.TensorFlowObjectDetector.utils.DEFAULT_LABEL_UNKNOWN
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,6 +32,8 @@ class TensorDetailScreenViewModel @Inject constructor(
     private var analyzer: ObjectDetectionAnalyzer? = null
     private val _uiState = MutableStateFlow(TensorDetailUIState())
     val uiState: StateFlow<TensorDetailUIState> = _uiState.asStateFlow()
+    private val _uiAction = MutableSharedFlow<TensorDetailUiAction>(extraBufferCapacity = 1)
+    val uiAction: SharedFlow<TensorDetailUiAction> = _uiAction.asSharedFlow()
 
     init {
         val rawImageUri = savedStateHandle.get<String>(IMAGE_URI_KEY)
@@ -87,6 +96,28 @@ class TensorDetailScreenViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun onEvent(event: TensorDetailUiEvent) {
+        when (event) {
+            TensorDetailUiEvent.OnSeeAdvancedAnalysisClicked -> emitAdvancedAnalysisNavigation()
+        }
+    }
+
+    private fun emitAdvancedAnalysisNavigation() {
+        val state = _uiState.value
+        val topMatch = state.detectionResults.firstOrNull()
+        val context = ChatContext(
+            currentResult = RecognitionResult(
+                label = topMatch?.plantName ?: (state.objectName ?: DEFAULT_LABEL_UNKNOWN),
+                confidence = topMatch?.confidence ?: (state.confidence ?: CONST_ZERO_VALUE_FLOAT),
+                category = topMatch?.category ?: ResultCategory.GENERAL
+            ),
+            extraMetadata = buildMap {
+                state.imageUri?.toString()?.let { put(IMAGE_URI_KEY, it) }
+            }
+        )
+        _uiAction.tryEmit(TensorDetailUiAction.NavigateToAdvancedAnalysis(context))
     }
 
     override fun onCleared() {
